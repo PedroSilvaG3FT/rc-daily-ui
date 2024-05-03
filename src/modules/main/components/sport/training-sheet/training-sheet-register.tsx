@@ -144,6 +144,8 @@ export default function TrainingSheetRegister(
       const items = trainingSheet[currentDayKey] as ISportTrainingSheetDay[];
 
       const handleCreate = () => {
+        console.log("CREATE ACTIVITY :", value);
+        console.log("ITEMS :", items);
         if (!!items) items.push(value);
         else
           (trainingSheet[currentDayKey] as ISportTrainingSheetDay[]) = [value];

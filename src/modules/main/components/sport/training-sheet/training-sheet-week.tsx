@@ -18,11 +18,15 @@ import WeekDaySelection, {
 } from "@/modules/@shared/components/week-day-selection";
 import { Button } from "@/_shad/components/ui/button";
 import { Rocket } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import trainingModeStore from "@/store/sport/training-mode.store";
 
 export default function TrainingSheetWeek() {
+  const navigate = useNavigate();
   const [dayView, setDayView] = useState<ISportTrainingSheetDay[]>([]);
   const weekDaySelectionComponentRef = useRef<WeekDaySelectionHandler>(null);
 
+  const _trainingModeStore = trainingModeStore((state) => state);
   const _trainingSheetStore = trainingSheetStore((state) => state);
   const { current } = _trainingSheetStore;
   const hasCurrent = !!current.id;
@@ -42,6 +46,12 @@ export default function TrainingSheetWeek() {
     setDayView(current[key] as ISportTrainingSheetDay[]);
   };
 
+  const handleSelectTraining = () => {
+    navigate("/sport/training-mode");
+    _trainingModeStore.reset();
+    _trainingModeStore.setActivities(dayView);
+  };
+
   useEffect(() => {
     const date = new Date();
     const day = date.getDay() as WeekDayNumber;
@@ -57,7 +67,7 @@ export default function TrainingSheetWeek() {
         <CardHeader>
           <CardTitle className="w-full flex items-center justify-between">
             Semana
-            <Button>
+            <Button onClick={handleSelectTraining}>
               Iniciar Treino
               <Rocket className="ml-2" />
             </Button>
