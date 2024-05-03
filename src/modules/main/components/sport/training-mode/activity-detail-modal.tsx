@@ -1,7 +1,6 @@
 import {
   Drawer,
   DrawerClose,
-  DrawerTitle,
   DrawerFooter,
   IDrawerProps,
   DrawerContent,

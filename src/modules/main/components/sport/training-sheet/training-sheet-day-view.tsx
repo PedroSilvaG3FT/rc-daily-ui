@@ -1,11 +1,11 @@
+import { useState } from "react";
+import { CircleMinus, Copy, Pen } from "lucide-react";
 import Each from "@/modules/@shared/components/utils/each";
 import Show from "@/modules/@shared/components/utils/show";
 import { Separator } from "@/_shad/components/ui/separator";
-import { Circle, CircleCheck, CircleMinus, Copy, Pen } from "lucide-react";
-import { ISportTrainingSheetDay } from "@/modules/@shared/firebase/interfaces/sport-training-sheet.interface";
-import { useState } from "react";
 import TrainingSheetDayCopy from "./training-sheet-day-copy";
 import { IWeekDayItem } from "@/modules/@shared/components/_interfaces/week.interface";
+import { ISportTrainingSheetDay } from "@/modules/@shared/firebase/interfaces/sport-training-sheet.interface";
 interface ITrainingSheetDayViewProps {
   data: ISportTrainingSheetDay[];
   isEditMode?: boolean;
