@@ -1,20 +1,32 @@
-import { Button } from "@/_shad/components/ui/button";
 import Each from "@/modules/@shared/components/utils/each";
 import Show from "@/modules/@shared/components/utils/show";
 import { Separator } from "@/_shad/components/ui/separator";
-import { Circle, CircleCheck, CircleMinus, Pen } from "lucide-react";
+import { Circle, CircleCheck, CircleMinus, Copy, Pen } from "lucide-react";
 import { ISportTrainingSheetDay } from "@/modules/@shared/firebase/interfaces/sport-training-sheet.interface";
+import { useState } from "react";
+import TrainingSheetDayCopy from "./training-sheet-day-copy";
+import { IWeekDayItem } from "@/modules/@shared/components/_interfaces/week.interface";
 interface ITrainingSheetDayViewProps {
   data: ISportTrainingSheetDay[];
   isEditMode?: boolean;
 
   onEdit?: (item: ISportTrainingSheetDay) => void;
   onRemove?: (item: ISportTrainingSheetDay) => void;
+  onCopy?: (data: IWeekDayItem[], item: ISportTrainingSheetDay) => void;
 }
 export default function TrainingSheetDayView(
   props: ITrainingSheetDayViewProps
 ) {
-  const { data, onEdit, onRemove, isEditMode = false } = props;
+  const { data, onCopy, onEdit, onRemove, isEditMode = false } = props;
+  const [isModalCopyOpen, setIsModalCopyOpen] = useState(false);
+
+  const handleCopySelectionClose = (
+    data: IWeekDayItem[],
+    item: ISportTrainingSheetDay
+  ) => {
+    onCopy?.(data, item);
+    setIsModalCopyOpen(false);
+  };
 
   return (
     <Each
@@ -24,13 +36,9 @@ export default function TrainingSheetDayView(
           - Sem atividades para esse dia -
         </p>
       }
-      render={(item) => (
+      render={(item, index) => (
         <article className="bg-accent rounded-sm p-2 px-4 mb-4 flex gap-4 items-center justify-end transition-transform hover:scale-95">
-          <Show>
-            <Show.When isTrue={!isEditMode}>
-              {item.checked ? <CircleCheck /> : <Circle />}
-            </Show.When>
-          </Show>
+          <span>{index + 1}.</span>
 
           <p className="mr-auto">{item.title}</p>
 
@@ -49,21 +57,25 @@ export default function TrainingSheetDayView(
             <Show.When isTrue={isEditMode}>
               <Separator orientation="vertical" className="h-12" />
 
-              <Button
-                title="Editar"
-                variant={"ghost"}
-                onClick={() => onEdit?.(item)}
+              <TrainingSheetDayCopy
+                data={item}
+                baseDate={new Date()}
+                isOpen={isModalCopyOpen}
+                onClose={(data) => handleCopySelectionClose(data, item)}
+                onOpenChange={(data) => setIsModalCopyOpen(data)}
               >
-                <Pen className="w-5" />
-              </Button>
+                <Copy className="w-5 cursor-pointer" />
+              </TrainingSheetDayCopy>
 
-              <Button
-                title="Remover"
-                variant={"ghost"}
+              <Pen
+                className="w-5 cursor-pointer"
+                onClick={() => onEdit?.(item)}
+              />
+
+              <CircleMinus
+                className="w-5 cursor-pointer text-red-400"
                 onClick={() => onRemove?.(item)}
-              >
-                <CircleMinus className="w-5 text-red-400" />
-              </Button>
+              />
             </Show.When>
           </Show>
         </article>

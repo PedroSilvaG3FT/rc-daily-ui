@@ -4,24 +4,28 @@ import {
   CardHeader,
   CardContent,
 } from "@/_shad/components/ui/card";
-import {
-  ISportTrainingSheetDay,
-  ISportTrainingSheetItem,
-} from "@/modules/@shared/firebase/interfaces/sport-training-sheet.interface";
+import { ISportTrainingSheetDay } from "@/modules/@shared/firebase/interfaces/sport-training-sheet.interface";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import Show from "@/modules/@shared/components/utils/show";
 import { Separator } from "@/_shad/components/ui/separator";
 import TrainingSheetDayView from "./training-sheet-day-view";
+import trainingSheetStore from "@/store/sport/training-sheet.store";
 import { WeekDayNumber } from "@/modules/@shared/components/_types/week.type";
-import WeekDaySelection from "@/modules/@shared/components/week-day-selection";
 import { IWeekDayItem } from "@/modules/@shared/components/_interfaces/week.interface";
+import WeekDaySelection, {
+  WeekDaySelectionHandler,
+} from "@/modules/@shared/components/week-day-selection";
+import { Button } from "@/_shad/components/ui/button";
+import { Rocket } from "lucide-react";
 
-interface ITrainingSheetWeekProps {
-  data: ISportTrainingSheetItem;
-}
-export default function TrainingSheetWeek(props: ITrainingSheetWeekProps) {
-  const { data } = props;
+export default function TrainingSheetWeek() {
   const [dayView, setDayView] = useState<ISportTrainingSheetDay[]>([]);
+  const weekDaySelectionComponentRef = useRef<WeekDaySelectionHandler>(null);
+
+  const _trainingSheetStore = trainingSheetStore((state) => state);
+  const { current } = _trainingSheetStore;
+  const hasCurrent = !!current.id;
 
   const onSelectDay = (item: IWeekDayItem) => {
     const dayKeyMap = {
@@ -34,27 +38,49 @@ export default function TrainingSheetWeek(props: ITrainingSheetWeekProps) {
       6: "saturday",
     };
 
-    const key = dayKeyMap[item.day] as keyof typeof data;
-    setDayView(data[key] as ISportTrainingSheetDay[]);
+    const key = dayKeyMap[item.day] as keyof typeof current;
+    setDayView(current[key] as ISportTrainingSheetDay[]);
   };
 
   useEffect(() => {
     const date = new Date();
-    onSelectDay({ date, day: date.getDay() as WeekDayNumber });
-  }, [data]);
+    const day = date.getDay() as WeekDayNumber;
+
+    onSelectDay({ date, day });
+
+    weekDaySelectionComponentRef.current?.selectByDayNumber(day);
+  }, [current]);
 
   return (
     <>
       <Card>
         <CardHeader>
-          <CardTitle>Semana</CardTitle>
+          <CardTitle className="w-full flex items-center justify-between">
+            Semana
+            <Button>
+              Iniciar Treino
+              <Rocket className="ml-2" />
+            </Button>
+          </CardTitle>
 
-          <WeekDaySelection onSelect={onSelectDay} />
+          <WeekDaySelection
+            onSelect={onSelectDay}
+            ref={weekDaySelectionComponentRef}
+          />
           <Separator />
         </CardHeader>
 
         <CardContent>
-          <TrainingSheetDayView data={dayView} />
+          <Show>
+            <Show.When isTrue={hasCurrent}>
+              <TrainingSheetDayView data={dayView} />
+            </Show.When>
+            <Show.Else>
+              <p className="w-full text-center">
+                - Selecione uma ficha de treino -
+              </p>
+            </Show.Else>
+          </Show>
         </CardContent>
       </Card>
     </>

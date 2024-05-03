@@ -16,21 +16,17 @@ import Show from "@/modules/@shared/components/utils/show";
 import Each from "@/modules/@shared/components/utils/each";
 import WeightControlProgressModal from "./weight-control-progress";
 import WeightControlRegisterModal from "./weight-control-register";
+import weightControlStore from "@/store/sport/weight-control.store";
 import WeightControlAddProgress from "./weight-control-add-progress";
 import { ISportWeightControlItem } from "@/modules/@shared/firebase/interfaces/sport-weight-control.interface";
 
-interface IWeightControlSummaryProps {
-  data: ISportWeightControlItem;
-  onDataUpdated: (data: ISportWeightControlItem) => void;
-}
-
-export default function WeightControlSummary(
-  props: IWeightControlSummaryProps
-) {
-  const { data, onDataUpdated } = props;
+export default function WeightControlSummary() {
   const [isModalRegisterOpen, setIsModalRegisterOpen] = useState(false);
   const [isModalProgressOpen, setIsModalProgressOpen] = useState(false);
   const [isModalAddWeightOpen, setIsModalAddWeightOpen] = useState(false);
+
+  const _weightControlStore = weightControlStore((state) => state);
+  const { data } = _weightControlStore;
 
   const hasControl = !!data.id;
   const emptyText = typewriterBuildWords(
@@ -43,9 +39,9 @@ export default function WeightControlSummary(
   const openModalAddWeight = () => setIsModalAddWeightOpen(true);
 
   const handleDataUpdated = (data: ISportWeightControlItem) => {
-    onDataUpdated(data);
     setIsModalRegisterOpen(false);
     setIsModalAddWeightOpen(false);
+    _weightControlStore.setData(data);
   };
 
   return (

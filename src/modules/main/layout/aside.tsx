@@ -9,6 +9,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/_shad/components/ui/tooltip";
+import { ToggleTheme } from "@/modules/@shared/components/toggle-theme.tsx";
 
 export default function AppAside() {
   const navigate = useNavigate();
@@ -19,7 +20,7 @@ export default function AppAside() {
       <nav className="flex flex-col items-center gap-4 px-2 sm:py-5">
         <Tooltip>
           <TooltipTrigger asChild>
-            <img src={Logo} alt="D" />
+            <img src={Logo} alt="D" className="rounded-sm w-12 object-cover" />
           </TooltipTrigger>
 
           <TooltipContent side="right">Daily</TooltipContent>
@@ -42,6 +43,8 @@ export default function AppAside() {
       </nav>
 
       <nav className="mt-auto flex flex-col items-center gap-4 px-2 sm:py-5">
+        <ToggleTheme />
+
         <Tooltip>
           <TooltipTrigger asChild>
             <a

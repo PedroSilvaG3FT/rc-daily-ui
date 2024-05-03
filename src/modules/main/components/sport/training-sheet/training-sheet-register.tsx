@@ -18,8 +18,10 @@ import AppFormInput from "@/modules/@shared/components/form/form-input";
 import { Separator } from "@/_shad/components/ui/separator";
 import AppFormTextarea from "@/modules/@shared/components/form/form-textarea";
 import AppFormSwitch from "@/modules/@shared/components/form/form-switch";
-import WeekDaySelection from "@/modules/@shared/components/week-day-selection";
-import { useEffect, useState } from "react";
+import WeekDaySelection, {
+  WeekDaySelectionHandler,
+} from "@/modules/@shared/components/week-day-selection";
+import { useEffect, useRef, useState } from "react";
 import {
   ISportTrainingSheetDay,
   ISportTrainingSheetItem,
@@ -32,6 +34,8 @@ import { SportTrainingSheetModel } from "@/modules/@shared/firebase/models/sport
 import { SportTrainingSheetService } from "@/modules/@shared/firebase/services/sport-training-sheet.service";
 import loadingStore from "@/store/loading.store";
 import _ from "lodash";
+import trainingSheetStore from "@/store/sport/training-sheet.store";
+import { SportFacede } from "@/modules/main/facades/sport.facede";
 
 const formId = "training-sheet-form";
 const formSchema = z.object({
@@ -40,20 +44,22 @@ const formSchema = z.object({
   description: z.string().min(1, "Campo obrigatório"),
 });
 
-interface ITrainingSheetDrawerProps extends IDrawerProps {
-  data?: ISportTrainingSheetItem;
+interface ITrainingSheetRegisterProps extends IDrawerProps {
   onFinish: (data: ISportTrainingSheetItem) => void;
 }
 
-export default function TrainingSheetDrawer(props: ITrainingSheetDrawerProps) {
-  const {
-    isOpen,
-    onOpenChange,
-    children,
-    onFinish,
-    data = {} as ISportTrainingSheetItem,
-  } = props;
-  const isEdit = !!data?.id;
+const _sportFacede = new SportFacede();
+
+export default function TrainingSheetRegister(
+  props: ITrainingSheetRegisterProps
+) {
+  const { isOpen, children, onFinish, onOpenChange } = props;
+
+  const weekDaySelectionComponentRef = useRef<WeekDaySelectionHandler>(null);
+  const _trainingSheetStore = trainingSheetStore((state) => state);
+  const { registerData } = _trainingSheetStore;
+
+  const isEdit = !!registerData?.id;
 
   const _loadingStore = loadingStore((state) => state);
   const _sportTrainingSheetModel = new SportTrainingSheetModel();
@@ -72,7 +78,7 @@ export default function TrainingSheetDrawer(props: ITrainingSheetDrawerProps) {
     {} as ISportTrainingSheetItem
   );
 
-  const onSelectDay = (item: IWeekDayItem) => {
+  const getDayKey = (item: IWeekDayItem) => {
     const dayKeyMap = {
       0: "sunday",
       1: "monday",
@@ -83,7 +89,11 @@ export default function TrainingSheetDrawer(props: ITrainingSheetDrawerProps) {
       6: "saturday",
     };
 
-    const key = dayKeyMap[item.day] as keyof typeof trainingSheet;
+    return dayKeyMap[item.day] as keyof typeof trainingSheet;
+  };
+
+  const onSelectDay = (item: IWeekDayItem) => {
+    const key = getDayKey(item);
 
     setCurrentDayKey(key);
     setDayView(trainingSheet[key] as ISportTrainingSheetDay[]);
@@ -100,7 +110,7 @@ export default function TrainingSheetDrawer(props: ITrainingSheetDrawerProps) {
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     const modelDTO = _sportTrainingSheetModel.buildRegisterDTO({
-      ...data,
+      ...registerData,
       ...trainingSheet,
       title: values.title,
       active: values.active,
@@ -109,13 +119,18 @@ export default function TrainingSheetDrawer(props: ITrainingSheetDrawerProps) {
 
     const $request = !isEdit
       ? _sportTrainingSheetService.create(modelDTO)
-      : _sportTrainingSheetService.update(String(data.id), modelDTO);
+      : _sportTrainingSheetService.update(String(registerData.id), modelDTO);
 
     $request
-      .then(() => {
+      .then(async (response) => {
+        const id = response?.id || String(registerData.id);
+
         const result = _sportTrainingSheetModel.buildItem(modelDTO);
-        onFinish({ ...data, ...result, id: data.id });
+        if (modelDTO.active) await _sportFacede.updateCurrentSheet(id);
+
+        onFinish({ ...registerData, ...result, id });
         form.reset();
+
         _loadingStore.setShow(false);
       })
       .catch(() => {
@@ -169,19 +184,36 @@ export default function TrainingSheetDrawer(props: ITrainingSheetDrawerProps) {
     }
   };
 
+  const handleCopyActivity = (
+    data: IWeekDayItem[],
+    activity: ISportTrainingSheetDay
+  ) => {
+    data.forEach((item) => {
+      const key = getDayKey(item);
+      const items = trainingSheet[key] as ISportTrainingSheetDay[];
+
+      if (!!items) items.push(activity);
+      else (trainingSheet[key] as ISportTrainingSheetDay[]) = [activity];
+    });
+  };
+
   useEffect(() => {
     if (isOpen && isEdit) {
-      form.setValue("title", data.title);
-      form.setValue("active", !!data.active);
-      form.setValue("description", data.description);
+      form.setValue("title", registerData.title);
+      form.setValue("active", !!registerData.active);
+      form.setValue("description", registerData.description);
 
-      setTrainingSheet(data);
+      setTrainingSheet(registerData);
     } else form.reset();
+
+    setTimeout(() => {
+      weekDaySelectionComponentRef.current?.selectByDayNumber(0);
+    }, 150);
   }, [isOpen]);
 
   useEffect(() => {
-    setTrainingSheet(data);
-  }, [data]);
+    setTrainingSheet(registerData);
+  }, [registerData]);
 
   useEffect(() => {
     if (!dayView?.length) {
@@ -215,7 +247,7 @@ export default function TrainingSheetDrawer(props: ITrainingSheetDrawerProps) {
                   label="Titulo"
                   name="title"
                   control={form.control}
-                  placeholder="Insira um titulo para a sua ficha"
+                  placeholder="Insira um titulo para a sua ficha."
                 />
 
                 <AppFormTextarea
@@ -232,10 +264,17 @@ export default function TrainingSheetDrawer(props: ITrainingSheetDrawerProps) {
                 />
               </form>
 
-              <WeekDaySelection hideDayNumber onSelect={onSelectDay} />
+              <WeekDaySelection
+                hideDayNumber
+                className="my-4"
+                onSelect={onSelectDay}
+                ref={weekDaySelectionComponentRef}
+              />
+
               <TrainingSheetDayView
                 isEditMode
                 data={dayView}
+                onCopy={handleCopyActivity}
                 onEdit={handleEditActivity}
                 onRemove={handleRemoveActivity}
               />

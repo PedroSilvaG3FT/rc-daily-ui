@@ -1,20 +1,20 @@
 import {
   Card,
+  CardTitle,
   CardContent,
   CardDescription,
-  CardTitle,
 } from "@/_shad/components/ui/card";
 import {
   formatDateLoacale,
   getWeekDaysFromDate,
 } from "../functions/date.function";
+import Show from "./utils/show";
 import Each from "./utils/each";
 import { cn } from "@/_shad/lib/utils";
-import { useEffect, useState } from "react";
 import { WeekDayNumber } from "./_types/week.type";
 import { Separator } from "@radix-ui/react-separator";
 import { IWeekDayItem } from "./_interfaces/week.interface";
-import Show from "./utils/show";
+import React, { useEffect, useState, useImperativeHandle } from "react";
 
 interface IWeekDaySelectionProps {
   initial?: WeekDayNumber;
@@ -24,7 +24,14 @@ interface IWeekDaySelectionProps {
   onSelect: (data: IWeekDayItem) => void;
 }
 
-export default function WeekDaySelection(props: IWeekDaySelectionProps) {
+export type WeekDaySelectionHandler = {
+  selectByDayNumber: (data: WeekDayNumber) => void;
+};
+
+const WeekDaySelection: React.ForwardRefRenderFunction<
+  WeekDaySelectionHandler,
+  IWeekDaySelectionProps
+> = (props, ref) => {
   const currentDate = new Date();
   const initialDay = currentDate.getDay() as WeekDayNumber;
   const {
@@ -53,9 +60,18 @@ export default function WeekDaySelection(props: IWeekDaySelectionProps) {
     setSelected(item.day);
   };
 
+  const selectByDayNumber = (day: WeekDayNumber) => {
+    const item = days.find((item) => item.day === day);
+    if (item) handleSelect(item);
+  };
+
   useEffect(() => {
     initDays();
   }, []);
+
+  useImperativeHandle(ref, () => ({
+    selectByDayNumber,
+  }));
 
   return (
     <article className="grid">
@@ -76,7 +92,7 @@ export default function WeekDaySelection(props: IWeekDaySelectionProps) {
               )}
             >
               <CardContent className="p-0 w-12 flex gap-2 flex-col items-center justify-center">
-                <CardTitle className="capitalize font-light">
+                <CardTitle className="capitalize font-semibold">
                   {formatDateLoacale(item.date, "EEE").substring(0, 3)}
                 </CardTitle>
 
@@ -101,4 +117,6 @@ export default function WeekDaySelection(props: IWeekDaySelectionProps) {
       </section>
     </article>
   );
-}
+};
+
+export default React.forwardRef(WeekDaySelection);

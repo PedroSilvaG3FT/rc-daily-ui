@@ -18,38 +18,69 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/_shad/components/ui/dropdown-menu";
-import TrainingSheetDrawer from "./training-sheet-drawer";
+import TrainingSheetRegister from "./training-sheet-register";
+import { SportFacede } from "@/modules/main/facades/sport.facede";
+import trainingSheetStore from "@/store/sport/training-sheet.store";
+import { SportTrainingSheetService } from "@/modules/@shared/firebase/services/sport-training-sheet.service";
 
-interface ITrainingSheetListProps {
-  data: ISportTrainingSheetItem[];
-  onListUpdate: () => void;
-}
-export default function TrainingSheetList(props: ITrainingSheetListProps) {
-  const { data, onListUpdate } = props;
+export default function TrainingSheetList() {
+  const _sportFacede = new SportFacede();
+  const _sportTrainingSheetService = new SportTrainingSheetService();
+
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
-  const [trainingSheetEdit, setTrainingSheetEdit] =
-    useState<ISportTrainingSheetItem>({} as ISportTrainingSheetItem);
 
-  const _getItemById = (id: string) => data.find((item) => item.id === id);
+  const _trainingSheetStore = trainingSheetStore((state) => state);
+  const { list } = _trainingSheetStore;
+
+  const _getItemById = (id: string) => list.find((item) => item.id === id);
 
   const handleUpdateActive = (id: string) => {
-    const item = _getItemById(id);
-    console.log("handleUpdateActive : ", item);
+    _sportFacede
+      .updateCurrentSheet(id)
+      .then(() => _sportFacede.getTrainingSheetListStore(true))
+      .catch((error) => {
+        console.log("handleUpdateActive : ", error);
+      });
   };
 
   const handleOpenEdit = (id: string) => {
     const item = _getItemById(id);
 
     if (item) {
-      setTrainingSheetEdit(item);
+      _trainingSheetStore.setRegisterData(item);
       setIsRegisterOpen(true);
     }
-    console.log("handleOpenEdit : ", item);
   };
 
   const handleDelete = (id: string) => {
     const item = _getItemById(id);
-    console.log("handleDelete : ", item);
+
+    _sportTrainingSheetService
+      .delete(String(item?.id))
+      .then(() => _sportFacede.getTrainingSheetListStore(true))
+      .catch((error) => {
+        console.log("handleDelete : ", error);
+      });
+  };
+
+  const onOpenSheetDrawerChange = (data: boolean) => {
+    setIsRegisterOpen(data);
+
+    if (!data) {
+      _trainingSheetStore.setRegisterData({} as ISportTrainingSheetItem);
+    }
+  };
+
+  const handleRegisterFinish = () => {
+    _sportFacede
+      .getTrainingSheetListStore(true)
+      .then(() => {
+        setIsRegisterOpen(false);
+        _trainingSheetStore.setRegisterData({} as ISportTrainingSheetItem);
+      })
+      .catch((error) => {
+        console.log("handleRegisterFinish ", error);
+      });
   };
 
   const columns: ColumnDef<ISportTrainingSheetItem>[] = [
@@ -108,28 +139,20 @@ export default function TrainingSheetList(props: ITrainingSheetListProps) {
       <nav className="mb-4 flex items-center justify-between">
         <h2 className="font-xl font-semibold">Minhas fichas de treino </h2>
 
-        <TrainingSheetDrawer
+        <TrainingSheetRegister
           isOpen={isRegisterOpen}
-          data={trainingSheetEdit}
-          onFinish={() => {
-            onListUpdate();
-            setIsRegisterOpen(false);
-            setTrainingSheetEdit({} as ISportTrainingSheetItem);
-          }}
-          onOpenChange={(data) => {
-            setIsRegisterOpen(data);
-            if (!data) setTrainingSheetEdit({} as ISportTrainingSheetItem);
-          }}
+          onFinish={handleRegisterFinish}
+          onOpenChange={onOpenSheetDrawerChange}
         >
           <Button>
             Nova Ficha
             <Plus className="ml-4" />
           </Button>
-        </TrainingSheetDrawer>
+        </TrainingSheetRegister>
       </nav>
 
       <DataTable
-        data={data}
+        data={list}
         columns={columns}
         pagination={{ pageSize: 5, pageIndex: 0 }}
       />

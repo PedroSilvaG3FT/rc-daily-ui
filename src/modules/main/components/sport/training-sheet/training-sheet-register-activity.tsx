@@ -92,23 +92,25 @@ export default function TrainingSheetRegisterActivity(
                 placeholder="Insira o nome da atividade"
               />
 
-              <AppFormInput
-                min={0}
-                type="number"
-                name="series"
-                label="Séries"
-                control={form.control}
-                placeholder="Número de séries"
-              />
+              <article className="grid gap-4 grid-cols-2">
+                <AppFormInput
+                  min={0}
+                  type="number"
+                  name="series"
+                  label="Séries"
+                  placeholder="0"
+                  control={form.control}
+                />
 
-              <AppFormInput
-                min={0}
-                type="number"
-                label="Repetições"
-                name="repetitions"
-                control={form.control}
-                placeholder="Número de repetições em cada série"
-              />
+                <AppFormInput
+                  min={0}
+                  type="number"
+                  placeholder="0"
+                  label="Repetições"
+                  name="repetitions"
+                  control={form.control}
+                />
+              </article>
 
               <p className="w-full text-center">ou</p>
 
