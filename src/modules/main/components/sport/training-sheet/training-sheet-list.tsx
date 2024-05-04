@@ -22,12 +22,16 @@ import TrainingSheetRegister from "./training-sheet-register";
 import { SportFacede } from "@/modules/main/facades/sport.facede";
 import trainingSheetStore from "@/store/sport/training-sheet.store";
 import { SportTrainingSheetService } from "@/modules/@shared/firebase/services/sport-training-sheet.service";
+import ConfirmModal from "@/modules/@shared/components/utils/confirm-modal";
 
 export default function TrainingSheetList() {
   const _sportFacede = new SportFacede();
   const _sportTrainingSheetService = new SportTrainingSheetService();
 
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
+
+  const [itemIdDelete, setItemIdDelete] = useState("");
+  const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
 
   const _trainingSheetStore = trainingSheetStore((state) => state);
   const { list } = _trainingSheetStore;
@@ -52,11 +56,12 @@ export default function TrainingSheetList() {
     }
   };
 
-  const handleDelete = (id: string) => {
-    const item = _getItemById(id);
+  const handleDelete = (isConfimed: boolean) => {
+    setIsConfirmDeleteOpen(false);
 
+    if (!isConfimed) return;
     _sportTrainingSheetService
-      .delete(String(item?.id))
+      .delete(itemIdDelete)
       .then(() => _sportFacede.getTrainingSheetListStore(true))
       .catch((error) => {
         console.log("handleDelete : ", error);
@@ -81,6 +86,11 @@ export default function TrainingSheetList() {
       .catch((error) => {
         console.log("handleRegisterFinish ", error);
       });
+  };
+
+  const handleSelectDeleteItemId = (id: string) => {
+    setItemIdDelete(id);
+    setIsConfirmDeleteOpen(true);
   };
 
   const columns: ColumnDef<ISportTrainingSheetItem>[] = [
@@ -110,6 +120,7 @@ export default function TrainingSheetList() {
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
+
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => handleUpdateActive(itemId)}>
                 <ClipboardList className="w-4 mr-2" />
@@ -122,7 +133,7 @@ export default function TrainingSheetList() {
 
               <DropdownMenuItem
                 className="text-red-400"
-                onClick={() => handleDelete(itemId)}
+                onClick={() => handleSelectDeleteItemId(itemId)}
               >
                 <CircleMinus className="w-4 mr-2" />
                 Remover
@@ -135,27 +146,35 @@ export default function TrainingSheetList() {
   ];
 
   return (
-    <section>
-      <nav className="mb-4 flex items-center justify-between">
-        <h2 className="font-xl font-semibold">Minhas fichas de treino </h2>
+    <>
+      <section>
+        <nav className="mb-4 flex items-center justify-between">
+          <h2 className="font-xl font-semibold">Minhas fichas de treino </h2>
 
-        <TrainingSheetRegister
-          isOpen={isRegisterOpen}
-          onFinish={handleRegisterFinish}
-          onOpenChange={onOpenSheetDrawerChange}
-        >
-          <Button>
-            Nova Ficha
-            <Plus className="ml-4" />
-          </Button>
-        </TrainingSheetRegister>
-      </nav>
+          <TrainingSheetRegister
+            isOpen={isRegisterOpen}
+            onFinish={handleRegisterFinish}
+            onOpenChange={onOpenSheetDrawerChange}
+          >
+            <Button>
+              Nova Ficha
+              <Plus className="ml-4" />
+            </Button>
+          </TrainingSheetRegister>
+        </nav>
 
-      <DataTable
-        data={list}
-        columns={columns}
-        pagination={{ pageSize: 5, pageIndex: 0 }}
-      />
-    </section>
+        <DataTable
+          data={list}
+          columns={columns}
+          pagination={{ pageSize: 5, pageIndex: 0 }}
+        />
+      </section>
+
+      <ConfirmModal
+        isOpen={isConfirmDeleteOpen}
+        title="Remover Ficha ?"
+        onSelect={(data) => handleDelete(data)}
+      ></ConfirmModal>
+    </>
   );
 }

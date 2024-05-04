@@ -8,6 +8,7 @@ interface AppTimerProps {
   className?: string;
   hideReset?: boolean;
   initialSeconds?: number;
+  showActionLabel?: boolean;
   mode: "timer" | "countdown";
   onPlayChange?: (value: boolean) => void;
   onSecondChange?: (value: number) => void;
@@ -29,6 +30,7 @@ const AppTimer: React.ForwardRefRenderFunction<
     onSecondChange,
     hideReset = false,
     initialSeconds = 0,
+    showActionLabel = false,
   } = props;
   const [totalSeconds, setTotalSeconds] = useState(initialSeconds);
   const [isActive, setIsActive] = useState(false);
@@ -88,10 +90,16 @@ const AppTimer: React.ForwardRefRenderFunction<
       <article className="flex items-center pl-4 border-l-2">
         <Button
           variant="ghost"
-          className="w-12 text-green-400"
+          className=" text-green-400"
           onClick={toggleTimer}
         >
           {isActive ? <Pause className="h-5" /> : <Play className="h-5" />}
+
+          <Show>
+            <Show.When isTrue={showActionLabel}>
+              <span className="ml-2">{isActive ? "Pausar" : "Iniciar"}</span>
+            </Show.When>
+          </Show>
         </Button>
 
         <Show>
