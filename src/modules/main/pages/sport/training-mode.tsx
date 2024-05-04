@@ -1,16 +1,15 @@
+import { cn } from "@/_shad/lib/utils";
 import { useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/_shad/components/ui/button";
 import { Separator } from "@/_shad/components/ui/separator";
 import Animate from "@/modules/@shared/components/utils/animate";
 import trainingModeStore from "@/store/sport/training-mode.store";
+import { AnimationUtil } from "@/modules/@shared/util/animation.util";
+import ConfirmModal from "@/modules/@shared/components/utils/confirm-modal";
 import ActivityList from "../../components/sport/training-mode/activity-list";
 import AppTimer, { AppTimerHandler } from "@/modules/@shared/components/timer";
 import ActivityDetail from "../../components/sport/training-mode/activity-detail";
-import ConfirmModal from "@/modules/@shared/components/utils/confirm-modal";
-import { useNavigate } from "react-router-dom";
-import { cn } from "@/_shad/lib/utils";
-import Show from "@/modules/@shared/components/utils/show";
-import { AnimationUtil } from "@/modules/@shared/util/animation.util";
 
 export default function TrainingMode() {
   const navigate = useNavigate();
